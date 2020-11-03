@@ -14,6 +14,14 @@ class BaseGameState:
 
     def get_score(self):
         return NotImplemented
+    #
+    # def get_matrix(self):
+    #     return NotImplemented
+    #
+    # def same_matrix(self, other):
+    #     np_arr1 = np.array(self.get_matrix())
+    #     np_arr2 = np.array(other.get_matrix())
+    #     return np.equal()
 
     def get_successors(self, agent_id):
         """
@@ -200,7 +208,15 @@ class GameStateImpl(CloneableGameState):
             return []
 
         if agent_id == c.PLAYER:
-            return [c.ACTION_LEFT, c.ACTION_UP, c.ACTION_DOWN, c.ACTION_RIGHT]
+            possible_actions = [c.ACTION_LEFT, c.ACTION_UP, c.ACTION_DOWN, c.ACTION_RIGHT]
+            available_actions = []
+            for action in possible_actions:
+                succ = self.get_successor(action, agent_id)
+                if not np.array_equal(succ.matrix, self.matrix):
+                    # That means something changed, so permit this action only in this case to prevent our agent from stalling
+                    available_actions.append(action)
+
+            return available_actions
         elif agent_id == c.ADVERSARY:
             actions = []
             for i in range(len(self.matrix)):

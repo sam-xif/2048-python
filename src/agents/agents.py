@@ -45,7 +45,7 @@ class ExpectimaxAgent(Base2048Agent):
 
     def evaluate(self, game_state):
         mat = game_state.matrix
-        return game_state.get_score() + np.sum([np.sum([np.log(x + 1) for x in row]) for row in mat])
+        return game_state.get_score() + np.sum([np.sum([x for x in row]) for row in mat])
 
     def _max_decision(self, game_state: BaseGameState, depth=4):
         if depth < 0:
@@ -59,8 +59,8 @@ class ExpectimaxAgent(Base2048Agent):
         successor_states = [game_state.get_successor(act, c.PLAYER) for act in actions]
         arr = [self._expectation_value(st, depth) for st in successor_states]
         max_ = np.max(arr)
-        indices = [i for i, x in enumerate(arr) if x == max_]
-        return random.choice(indices)  # Randomly break ties
+        indices = [i for i, x in enumerate(arr) if abs(x - max_) <= 0.001]
+        return actions[random.choice(indices)]  # Randomly break ties
 
     def _expectation_value(self, game_state: BaseGameState, depth):
         # branch into all possible placements of 2-tile
