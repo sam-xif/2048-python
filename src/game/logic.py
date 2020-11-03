@@ -6,7 +6,8 @@
 # Note that written answers are commented out to allow us to run your
 # code easily while grading your problem set.
 import random
-import constants as c
+from src.game import constants as c
+
 
 #######
 #Task 1a#
@@ -152,18 +153,20 @@ def cover_up(mat):
 
 
 def merge(mat):
+    points = 0
     done = False
     for i in range(c.GRID_LEN):
         for j in range(c.GRID_LEN-1):
             if mat[i][j] == mat[i][j+1] and mat[i][j] != 0:
+                points += mat[i][j] * 2
                 mat[i][j] *= 2
                 mat[i][j+1] = 0
                 done = True
-    return (mat, done)
+    return (mat, done, points)
 
 
 def up(game):
-    print("up")
+    #print("up")
     # return matrix after shifting up
     game = transpose(game)
     game, done = cover_up(game)
@@ -172,11 +175,12 @@ def up(game):
     done = done or temp[1]
     game = cover_up(game)[0]
     game = transpose(game)
-    return (game, done)
+    points = temp[2]
+    return (game, done, points)
 
 
 def down(game):
-    print("down")
+    #print("down")
     game = reverse(transpose(game))
     game, done = cover_up(game)
     temp = merge(game)
@@ -184,22 +188,24 @@ def down(game):
     done = done or temp[1]
     game = cover_up(game)[0]
     game = transpose(reverse(game))
-    return (game, done)
+    points = temp[2]
+    return (game, done, points)
 
 
 def left(game):
-    print("left")
+    #print("left")
     # return matrix after shifting left
     game, done = cover_up(game)
     temp = merge(game)
     game = temp[0]
     done = done or temp[1]
     game = cover_up(game)[0]
-    return (game, done)
+    points = temp[2]
+    return (game, done, points)
 
 
 def right(game):
-    print("right")
+    #print("right")
     # return matrix after shifting right
     game = reverse(game)
     game, done = cover_up(game)
@@ -208,4 +214,5 @@ def right(game):
     done = done or temp[1]
     game = cover_up(game)[0]
     game = reverse(game)
-    return (game, done)
+    points = temp[2]
+    return (game, done, points)
