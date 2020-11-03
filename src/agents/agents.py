@@ -44,8 +44,23 @@ class DepthLimitedExpectimax(Base2048Agent):
         return mx
 
     def evaluate(self, game_state):
+        # TODO: Add negative utility for losing state
+        if game_state.state() == 'lose':
+            return -1000000
+
         mat = game_state.matrix
-        return game_state.get_score() + np.sum([np.sum([x**2 for x in row]) for row in mat])
+        return game_state.get_score() \
+               + np.sum([np.sum([x**2 for x in row]) for row in mat]) \
+               + (1 * game_state.get_score())**2 * np.sum([np.sum([1 if x == 0 else 0 for x in row]) for row in mat])
+
+        # This eval function can get us very close to 2048, but not past it. What's missing?
+
+        # Other heuristic ideas to incorporate
+        # * Keeping high valued tiles close to each other
+        # * Keeping tiles in monotonically decreasing order along one or both axes
+
+
+    # TODO: In these functions, check for whether the game is in the losing state and return straight away
 
     def _max_decision(self, game_state: BaseGameState, depth=4):
         if depth < 0:
@@ -59,6 +74,7 @@ class DepthLimitedExpectimax(Base2048Agent):
         successor_states = [game_state.get_successor(act, c.PLAYER) for act in actions]
         arr = [self._expectation_value(st, depth) for st in successor_states]
         max_ = np.max(arr)
+        print('MEUs of actions:', arr)
         indices = [i for i, x in enumerate(arr) if abs(x - max_) <= 0.001]
         return actions[random.choice(indices)]  # Randomly break ties
 
@@ -70,7 +86,10 @@ class DepthLimitedExpectimax(Base2048Agent):
         return np.average([self._max_value(st, depth - 1) for st in successor_states])
 
     def _max_value(self, game_state: BaseGameState, depth):
-        if depth == 0:
+        if depth <= 1:
+            # We stop at depth 1 because there is no point in expanding the expectation nodes at the last level.
+            # It saves us some work, because all of those states with just a 2 added to them evaluate to exactly
+            #  the same value. Therefore, the average of those values is that value.
             return self.evaluate(game_state)
 
         successor_states = game_state.get_successors(c.PLAYER)
@@ -96,12 +115,12 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
         # max of this value is 14, min is 0
         #  from 10-14, depth of 2. from 4-10, depth of 3, from 0-4, depth of 4
         depth = 0
-        if num_possible_adversary_actions <= 16 and num_possible_adversary_actions >= 8:
-            depth = 2
-        elif num_possible_adversary_actions < 8 and num_possible_adversary_actions >= 4:
+        if num_possible_adversary_actions <= 16 and num_possible_adversary_actions >= 10:
             depth = 3
-        elif num_possible_adversary_actions < 4 and num_possible_adversary_actions >= 0:
+        elif num_possible_adversary_actions < 10 and num_possible_adversary_actions >= 5:
             depth = 4
+        elif num_possible_adversary_actions < 5 and num_possible_adversary_actions >= 0:
+            depth = 5
 
         mx = self._max_decision(game_state, depth=depth)
         return mx

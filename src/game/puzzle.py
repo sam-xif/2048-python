@@ -45,7 +45,7 @@ class GameGrid(Frame):
                     game_ended = True
                     break
 
-                print('Score:', self.game_state.get_score())
+                #print('Score:', self.game_state.get_score())
 
             self.update()
             self.update_grid_cells()
