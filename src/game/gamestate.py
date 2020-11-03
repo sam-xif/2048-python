@@ -44,7 +44,7 @@ class BaseGameState:
         """
         return NotImplemented
 
-    def execute_action(self, action, agent_id) -> None:
+    def execute_action(self, action, agent_id) -> bool:
         """
         Executes an action.
         :param action: The action to execute
@@ -167,7 +167,7 @@ class GameStateImpl(CloneableGameState):
     def state(self):
         return logic.game_state(self.matrix)
 
-    def execute_action(self, action, agent_id):
+    def execute_action(self, action, agent_id) -> bool:
         # key = repr(event.char)
         # if key == c.KEY_BACK and len(self.history_matrixs) > 1:
         #     self.matrix = self.history_matrixs.pop()

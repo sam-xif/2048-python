@@ -98,7 +98,6 @@ class DepthLimitedExpectimax(Base2048Agent):
         successor_states = [game_state.get_successor(act, c.PLAYER) for act in actions]
         arr = [self._expectation_value(st, depth) for st in successor_states]
         max_ = np.max(arr)
-        print('MEUs of actions:', arr)
         indices = [i for i, x in enumerate(arr) if abs(x - max_) <= 0.001]
         return actions[random.choice(indices)]  # Randomly break ties
 
