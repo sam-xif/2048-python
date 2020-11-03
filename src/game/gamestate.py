@@ -156,6 +156,7 @@ class GameStateImpl(CloneableGameState):
         gs = GameStateImpl()
         gs.matrix = [x[:] for x in self.matrix]
         gs.history_matrixs = self.history_matrixs[:]
+        gs.score = self.score
         return gs
 
     def init_matrix(self):
