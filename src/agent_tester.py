@@ -30,7 +30,7 @@ def run_test(num_trials=100, with_ui=False, agent=RandomAgent):
         et = time.time()
 
         highest_tile = max([max(row) for row in gs.matrix])
-        info_tuple = (i, et - st, gs.get_score(), turn, highest_tile, gs.matrix)
+        info_tuple = (i, et - st, gs.get_score(), highest_tile, turn, gs.matrix)
         infos.append(info_tuple)
         print('trial {} complete. time elapsed: {:0.2f}s, score: {}, highest tile: {}, num of turns: {}\nfinal matrix: {}'
               .format(*info_tuple))
