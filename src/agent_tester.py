@@ -20,8 +20,6 @@ def run_test(num_trials=100, with_ui=False, agent=RandomAgent):
         while gs.state() != 'lose':
             if turn % 100 == 0:
                 print('turn', turn)
-            if turn > 200:
-                break
             act = agent.decide(gs)
             moved = gs.execute_action(act, c.PLAYER)
             if moved:
@@ -36,7 +34,7 @@ def run_test(num_trials=100, with_ui=False, agent=RandomAgent):
         infos.append(info_tuple)
         print('trial {} complete. time elapsed: {:0.2f}s, score: {}, highest tile: {}, num of turns: {}\nfinal matrix: {}'
               .format(*info_tuple))
-        break
 
-    with open('out.pkl', 'wb+') as f:
-        pickle.dump(infos, f)
+        with open('out.pkl', 'wb+') as f:
+            pickle.dump(infos, f)
+
