@@ -36,8 +36,8 @@ class DepthLimitedExpectimax(Base2048Agent):
     weight_grid = np.array([
         [-25, -25, -25, -25],
         [-10, -10, -10, -10],
-        [-10, -10, -10, -10],
-        [100, 10, 1, 0]
+        [-10, -10, -10, -1],
+        [1000, 100, 10, 1]
     ])
 
     def __init__(self):
@@ -54,25 +54,13 @@ class DepthLimitedExpectimax(Base2048Agent):
         if game_state.state() == 'lose':
             return -1000000
 
-        alpha = 1
+        alpha = 0
         beta = 2  # Weigh more to encourage merging of higher tiles
         gamma = 0.5
-        delta = 1.7
+        delta = 100
 
         mat = game_state.matrix
-        # Do this in one loop
-        # beta_term = 0
-        # gamma_term = 0
-        # for row in mat:
-        #     for x in row:
-        #         beta_term += x**2
-        #         gamma_term += (1 if x == 0 else 0)
-
         mat_dot_weight = sum([np.dot(w, m) for w, m in zip(DepthLimitedExpectimax.weight_grid, mat)])
-        # return alpha * game_state.get_score() \
-        #        + beta * beta_term \
-        #        + gamma * game_state.get_score()**2 * gamma_term \
-        #        + delta * mat_dot_weight
 
         return alpha * game_state.get_score() \
                + beta * sum([sum([x ** 2 for x in row]) for row in mat]) \
@@ -85,6 +73,11 @@ class DepthLimitedExpectimax(Base2048Agent):
         # * Keeping high valued tiles close to each other
         # * Keeping tiles in monotonically decreasing order along one or both axes
         # * Weight corners more (multipliers)
+
+        # Considerations:
+        # * delta cannot be too high because the agent will then avoid risks in order to keep the numbers
+        #   in a specific configuration. Sometimes the agent actually needs to deviate for a few moves to
+        #   make important merges.
 
     def _max_decision(self, game_state: BaseGameState, depth=4):
         if depth < 0:
@@ -102,6 +95,9 @@ class DepthLimitedExpectimax(Base2048Agent):
         return actions[random.choice(indices)]  # Randomly break ties
 
     def _expectation_value(self, game_state: BaseGameState, depth):
+        if depth <= 1:
+            return self.evaluate(game_state)
+
         # branch into all possible placements of 2-tile
         successor_states = game_state.get_successors(c.ADVERSARY)
         if len(successor_states) == 0:
@@ -109,7 +105,7 @@ class DepthLimitedExpectimax(Base2048Agent):
         return np.average([self._max_value(st, depth - 1) for st in successor_states])
 
     def _max_value(self, game_state: BaseGameState, depth):
-        if depth <= 1:
+        if depth < 1:
             # We stop at depth 1 because there is no point in expanding the expectation nodes at the last level.
             # It saves us some work, because all of those states with just a 2 added to them evaluate to exactly
             #  the same value. Therefore, the average of those values is that value.
@@ -139,7 +135,7 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
         #  from 10-14, depth of 2. from 4-10, depth of 3, from 0-4, depth of 4
         depth = 0
         if num_possible_adversary_actions <= 16 and num_possible_adversary_actions >= 10:
-            depth = 3
+            depth = 2
         elif num_possible_adversary_actions < 10 and num_possible_adversary_actions >= 5:
             depth = 3
         elif num_possible_adversary_actions < 5 and num_possible_adversary_actions >= 0:

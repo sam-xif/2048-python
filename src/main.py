@@ -3,7 +3,7 @@ from src.agents.agents import RandomAgent, DepthLimitedExpectimax, VariableDepth
 
 from src.agent_tester import run_test
 
-UI = False
+UI = True
 
 if __name__ == '__main__':
     if UI:
