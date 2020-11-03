@@ -33,6 +33,13 @@ class RandomAgent(Base2048Agent):
 
 
 class DepthLimitedExpectimax(Base2048Agent):
+    weight_grid = np.array([
+        [-25, -25, -25, -25],
+        [-10, -10, -10, -10],
+        [-10, -10, -10, -10],
+        [100, 10, 1, 0]
+    ])
+
     def __init__(self):
         super().__init__()
 
@@ -47,10 +54,30 @@ class DepthLimitedExpectimax(Base2048Agent):
         if game_state.state() == 'lose':
             return -1000000
 
+        alpha = 1
+        beta = 2  # Weigh more to encourage merging of higher tiles
+        gamma = 0.5
+        delta = 1.7
+
         mat = game_state.matrix
-        return game_state.get_score() \
-               + sum([sum([x**2 for x in row]) for row in mat]) \
-               + (1 * game_state.get_score())**2 * sum([sum([1 if x == 0 else 0 for x in row]) for row in mat])
+        # Do this in one loop
+        # beta_term = 0
+        # gamma_term = 0
+        # for row in mat:
+        #     for x in row:
+        #         beta_term += x**2
+        #         gamma_term += (1 if x == 0 else 0)
+
+        mat_dot_weight = sum([np.dot(w, m) for w, m in zip(DepthLimitedExpectimax.weight_grid, mat)])
+        # return alpha * game_state.get_score() \
+        #        + beta * beta_term \
+        #        + gamma * game_state.get_score()**2 * gamma_term \
+        #        + delta * mat_dot_weight
+
+        return alpha * game_state.get_score() \
+               + beta * sum([sum([x ** 2 for x in row]) for row in mat]) \
+               + gamma * game_state.get_score() ** 2 * sum([sum([1 if x == 0 else 0 for x in row]) for row in mat]) \
+               + delta * mat_dot_weight
 
         # This eval function can get us very close to 2048, but not past it. What's missing?
 
@@ -115,9 +142,9 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
         if num_possible_adversary_actions <= 16 and num_possible_adversary_actions >= 10:
             depth = 3
         elif num_possible_adversary_actions < 10 and num_possible_adversary_actions >= 5:
-            depth = 4
+            depth = 3
         elif num_possible_adversary_actions < 5 and num_possible_adversary_actions >= 0:
-            depth = 5
+            depth = 4
 
         mx = self._max_decision(game_state, depth=depth)
         return mx
