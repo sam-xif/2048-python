@@ -198,6 +198,13 @@ class GameStateImpl(CloneableGameState):
         else:
             raise ValueError('Unrecognized agent ID')
 
+    def _mats_eq(self, mat1, mat2):
+        for i in range(4):
+            for j in range(4):
+                if mat1[i][j] != mat2[i][j]:
+                    return False
+        return True
+
     def get_allowed_actions(self, agent_id):
         """
         Override method
@@ -212,7 +219,7 @@ class GameStateImpl(CloneableGameState):
             available_actions = []
             for action in possible_actions:
                 succ = self.get_successor(action, agent_id)
-                if not np.array_equal(succ.matrix, self.matrix):
+                if not self._mats_eq(succ.matrix, self.matrix):
                     # That means something changed, so permit this action only in this case to prevent our agent from stalling
                     available_actions.append(action)
 

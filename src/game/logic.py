@@ -59,10 +59,11 @@ def add_two(mat):
 
 
 def game_state(mat):
-    for i in range(len(mat)):
-        for j in range(len(mat[0])):
-            if mat[i][j] == 2048:
-                return 'win'
+    # Commenting this out because 1) we don't want to stop at 2048 and 2) optimization
+    # for i in range(len(mat)):
+    #     for j in range(len(mat[0])):
+    #         if mat[i][j] == 2048:
+    #             return 'win'
     for i in range(len(mat)-1):
         # intentionally reduced to check the row on the right and below
         # more elegant to use exceptions but most likely this will be their solution

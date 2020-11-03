@@ -44,23 +44,20 @@ class DepthLimitedExpectimax(Base2048Agent):
         return mx
 
     def evaluate(self, game_state):
-        # TODO: Add negative utility for losing state
         if game_state.state() == 'lose':
             return -1000000
 
         mat = game_state.matrix
         return game_state.get_score() \
-               + np.sum([np.sum([x**2 for x in row]) for row in mat]) \
-               + (1 * game_state.get_score())**2 * np.sum([np.sum([1 if x == 0 else 0 for x in row]) for row in mat])
+               + sum([sum([x**2 for x in row]) for row in mat]) \
+               + (1 * game_state.get_score())**2 * sum([sum([1 if x == 0 else 0 for x in row]) for row in mat])
 
         # This eval function can get us very close to 2048, but not past it. What's missing?
 
         # Other heuristic ideas to incorporate
         # * Keeping high valued tiles close to each other
         # * Keeping tiles in monotonically decreasing order along one or both axes
-
-
-    # TODO: In these functions, check for whether the game is in the losing state and return straight away
+        # * Weight corners more (multipliers)
 
     def _max_decision(self, game_state: BaseGameState, depth=4):
         if depth < 0:
