@@ -2,9 +2,9 @@
 Defines an abstract base agent class for playing 2048.
 """
 import random
-import src.game.constants as c
+import game.constants as c
 
-from src.game.gamestate import BaseGameState, GameStateImpl
+from game.gamestate import BaseGameState, GameStateImpl
 
 import numpy as np
 
@@ -46,12 +46,37 @@ class DepthLimitedExpectimax(Base2048Agent):
     def evaluate(self, game_state):
         # TODO: Add negative utility for losing state
         if game_state.state() == 'lose':
-            return -1000000
+            return -10000000
 
+        #weight = [[1, 2, 3, 4], [8, 7, 6, 5], [9, 10, 11, 12], [16, 15, 14, 13]]
+        #weight = [[1, 2**1, 2**2, 2**3], [2**7, 2**6, 2**5, 2**4], [2**8, 2**9, 2**10, 2**11], [4**11, 4**10, 4**9, 4**8]]
+        weight = [[1, 2**1, 2**2, 2**3], [2**7, 2**6, 2**5, 2**4], [2**8, 2**9, 2**10, 2**11], [2**15, 2**14, 2**13, 2**12]]
         mat = game_state.matrix
-        return game_state.get_score() \
-               + np.sum([np.sum([x**2 for x in row]) for row in mat]) \
-               + (1 * game_state.get_score())**2 * np.sum([np.sum([1 if x == 0 else 0 for x in row]) for row in mat])
+        weightValue = 0
+        sameWeightNeighbour = 0
+
+        for i in range(c.GRID_LEN):
+            for j in range(c.GRID_LEN):
+                weightValue += (weight[i][j] * mat[i][j])
+
+                if i - 1 >= 0 and mat[i-1][j] == mat[i][j]:
+                    sameWeightNeighbour += 1
+                
+                if i + 1 < c.GRID_LEN and mat[i+1][j] == mat[i][j]:
+                    sameWeightNeighbour += 1
+                
+                if j - 1 >= 0 and mat[i][j-1] == mat[i][j]:
+                    sameWeightNeighbour += 1
+                
+                if j + 1 < c.GRID_LEN and mat[i][j+1] == mat[i][j]:
+                    sameWeightNeighbour += 1        
+
+        # print("Score", game_state.get_score())
+        return weightValue + game_state.get_score() \
+                + 2**6 * (np.sum([np.sum([1 if x == 0 else 0 for x in row]) for row in mat])) \
+                + 2**4 * (sameWeightNeighbour/2)
+               # + np.sum([np.sum([x**2 for x in row]) for row in mat]) \   
+               # + (1 * game_state.get_score())**2 * np.sum([np.sum([1 if x == 0 else 0 for x in row]) for row in mat])            
 
         # This eval function can get us very close to 2048, but not past it. What's missing?
 
@@ -68,13 +93,14 @@ class DepthLimitedExpectimax(Base2048Agent):
 
         if depth == 0:
             return self.evaluate(game_state)
-
+        # print("Matrix", game_state.matrix)
+        # input("Press Enter to continue...")
         # max over all player actions
         actions = game_state.get_allowed_actions(c.PLAYER)
         successor_states = [game_state.get_successor(act, c.PLAYER) for act in actions]
         arr = [self._expectation_value(st, depth) for st in successor_states]
         max_ = np.max(arr)
-        print('MEUs of actions:', arr)
+        print('MEUs of actions:', arr, actions)
         indices = [i for i, x in enumerate(arr) if abs(x - max_) <= 0.001]
         return actions[random.choice(indices)]  # Randomly break ties
 
@@ -116,11 +142,11 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
         #  from 10-14, depth of 2. from 4-10, depth of 3, from 0-4, depth of 4
         depth = 0
         if num_possible_adversary_actions <= 16 and num_possible_adversary_actions >= 10:
-            depth = 3
+            depth = 2
         elif num_possible_adversary_actions < 10 and num_possible_adversary_actions >= 5:
-            depth = 4
+            depth = 3
         elif num_possible_adversary_actions < 5 and num_possible_adversary_actions >= 0:
-            depth = 5
+            depth = 4
 
         mx = self._max_decision(game_state, depth=depth)
         return mx
