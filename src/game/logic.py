@@ -34,15 +34,12 @@ def new_game(n):
 # Points to note:
 # Must ensure that it is created on a zero entry
 # 1 mark for creating the correct loop
-
+import itertools
 
 def add_two(mat):
-    a = random.randint(0, len(mat)-1)
-    b = random.randint(0, len(mat)-1)
-    while(mat[a][b] != 0):
-        a = random.randint(0, len(mat)-1)
-        b = random.randint(0, len(mat)-1)
-    mat[a][b] = 2
+    choices = list(itertools.chain.from_iterable([[(i, j) for j in range(len(mat[0])) if mat[i][j] == 0] for i in range(len(mat))]))
+    x, y = random.choice(choices)
+    mat[x][y] = 2
     return mat
 
 ###########
@@ -64,16 +61,28 @@ def game_state(mat):
     #     for j in range(len(mat[0])):
     #         if mat[i][j] == 2048:
     #             return 'win'
+
+    # According to the profiler, the method in which 8.3% of time is being spent (the highest proportion) is this one.
+    # Time to optimize this more!
+
     for i in range(len(mat)-1):
         # intentionally reduced to check the row on the right and below
         # more elegant to use exceptions but most likely this will be their solution
         for j in range(len(mat[0])-1):
-            if mat[i][j] == mat[i+1][j] or mat[i][j+1] == mat[i][j]:
-                return 'not over'
-    for i in range(len(mat)):  # check for any zero entries
-        for j in range(len(mat[0])):
+            # check for zero here as well since we check in the next loop
             if mat[i][j] == 0:
                 return 'not over'
+
+            if mat[i][j] == mat[i+1][j] or mat[i][j+1] == mat[i][j]:
+                return 'not over'
+    j = len(mat[0]) - 1
+    for i in range(len(mat)):  # check for any zero entries
+        if mat[i][j] == 0:
+            return 'not over'
+    i = len(mat) - 1
+    for j in range(len(mat[0])):
+        if mat[i][j] == 0:
+            return 'not over'
     for k in range(len(mat)-1):  # to check the left/right entries on the last row
         if mat[len(mat)-1][k] == mat[len(mat)-1][k+1]:
             return 'not over'

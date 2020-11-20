@@ -154,7 +154,7 @@ class GameStateImpl(CloneableGameState):
 
     def clone(self):
         gs = GameStateImpl()
-        gs.matrix = np.copy(self.matrix)
+        gs.matrix = [x[:] for x in self.matrix]
         gs.history_matrixs = self.history_matrixs[:]
         return gs
 
