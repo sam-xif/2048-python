@@ -106,6 +106,9 @@ class BaseGameState:
         # Execute a random one of these actions
         return self.execute_action(random.choice(actions), c.ADVERSARY)
 
+    def toString(self):
+        return NotImplemented
+
 
 class CloneableGameState(BaseGameState):
     def clone(self):
@@ -234,3 +237,6 @@ class GameStateImpl(CloneableGameState):
             return actions
         else:
             raise ValueError('Unrecognized agent ID')
+    
+    def toString(self):
+        return ','.join(str(item) for row in self.matrix for item in row)

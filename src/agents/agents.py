@@ -6,6 +6,7 @@ import src.game.constants as c
 
 from src.game.gamestate import BaseGameState, GameStateImpl
 
+import math
 import numpy as np
 
 def eval_function(game_state):
@@ -154,3 +155,106 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
 
         mx = self._max_decision(game_state, depth=depth)
         return mx
+
+class MonteCarloAgent(Base2048Agent):
+    def __init__(self):
+        super().__init__()
+        # Stores number of games played for each state
+        self.play = {}
+        # Stores number of games won for each state
+        self.win = {}
+        self.numGames = 1000
+        self.run_simulation()
+
+    def run_simulation(self):        
+        for i in range(self.numGames):
+            game_state = GameStateImpl()
+            visitedState = []
+            visitedState.append(game_state.toString())
+
+            while len(game_state.get_allowed_actions(c.PLAYER)) != 0: # game is not over yet
+                if game_state.toString() in self.play:
+                    actions = game_state.get_allowed_actions(c.PLAYER)
+                    maxValue = float('-inf')
+
+                    for action in actions:
+                        successor_state = game_state.get_successor(action, c.PLAYER) 
+
+                        if successor_state.toString() not in self.play:
+                            self.play[successor_state.toString()] = 0
+                            self.win[successor_state.toString()] = 0
+
+                        # select naxt action based on UCB formula
+                        ucb = self.getUCBValue(game_state, successor_state)                        
+                        if ucb > maxValue:
+                            maxValue = ucb
+                            selectedAction = action
+                else:
+                    actions = game_state.get_allowed_actions(c.PLAYER)
+                    if game_state.toString() not in self.play:
+                        self.play[game_state.toString()] = 0
+                        self.win[game_state.toString()] = 0
+
+                    for action in actions:
+                        successor_state = game_state.get_successor(action, c.PLAYER) 
+                        if successor_state.toString() not in self.play:
+                            self.play[successor_state.toString()] = 0
+                            self.win[successor_state.toString()] = 0
+
+                    # randomly expands tree
+                    selectedAction = actions[random.randint(0, len(actions) - 1)]
+                
+                moved = game_state.execute_action(selectedAction, c.PLAYER)
+                if moved:
+                    game_state.add_new_tile()
+                visitedState.append(game_state.toString())
+
+            # Backpropagation
+            for stateMatrix in visitedState:
+                if stateMatrix not in self.play:
+                    self.play[stateMatrix] = 1
+                else:
+                    self.play[stateMatrix] += 1
+                if game_state.toString().__contains__("512"): # currently takes 512 as winning state
+                    if stateMatrix not in self.win:
+                        self.win[stateMatrix] = 1
+                    else:
+                        self.win[stateMatrix] += 1              
+
+    def decide(self, game_state: BaseGameState):
+        """
+        Implement depth-limited expectimax
+        """
+        if game_state.toString() in self.play:
+            actions = game_state.get_allowed_actions(c.PLAYER)
+            maxValue = float('-inf')
+
+            for action in actions:
+                successor_state = game_state.get_successor(action, c.PLAYER) 
+                if successor_state.toString() not in self.win or self.win[successor_state.toString()] == 0 \
+                    or successor_state.toString() not in self.play or self.play[successor_state.toString()] == 0:
+                    winWeight = 0
+                else:
+                    winWeight = self.win[successor_state.toString()] / self.play[successor_state.toString()]
+
+                # decides action based on winweight (#wins / #gamesPlayed)
+                if winWeight > maxValue:
+                    maxValue = winWeight
+                    selectedAction = action
+        else:
+            actions = game_state.get_allowed_actions(c.PLAYER)    
+            selectedAction = actions[random.randint(0, len(actions) - 1)]
+
+        return selectedAction
+
+    def getUCBValue(self, game_state, successor_state):
+        const = math.sqrt(2)
+
+        if game_state.toString() not in self.play or self.play[game_state.toString()] == 0 \
+            or successor_state.toString() not in self.play or self.play[successor_state.toString()] == 0:
+            ucb = float('inf')
+        else:
+            ucb = (self.win[successor_state.toString()] / self.play[successor_state.toString()]) \
+                + (const * math.sqrt(math.log(self.play[game_state.toString()]) / self.play[successor_state.toString()]))
+        
+        return ucb
