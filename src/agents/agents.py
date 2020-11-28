@@ -5,6 +5,7 @@ import random
 import src.game.constants as c
 
 from src.game.gamestate import BaseGameState, GameStateImpl
+from src.game.weightvisualizer import WeightVisualizerGrid
 
 import numpy as np
 
@@ -182,9 +183,10 @@ class QLearningAgent(Base2048Agent):
             self.epsilon = lambda x: (np.cos(x * 2*np.pi / (self.epochs / 10)) + 1) / 2
         self.discount = discount
         self.stop = stop
+        self.cur_epoch = 0
         if weights is None:
             self.weights = [1 for i in range(16)]
-            self.train()
+            self.start_training()
         else:
             self.weights = weights
 
@@ -234,37 +236,45 @@ class QLearningAgent(Base2048Agent):
                    - self.q(old_state, action)
         return td_error
 
+    def start_training(self):
+        visualizer = WeightVisualizerGrid(self.train)
+
     def train(self):
-        for epoch in range(self.epochs):
-            print('training epoch', epoch, '; epsilon =', self.epsilon(epoch))
-            game_state = GameStateImpl(stop=self.stop)
+        epoch = self.cur_epoch
+        if epoch >= self.epochs:
+            return None
 
-            while game_state.state() == 'not over':
-                # Make a move, experience reward, update weights
-                old_game_state = game_state.clone()
-                chosen_action = None
+        print('training epoch', self.cur_epoch, '; epsilon =', self.epsilon(epoch))
+        game_state = GameStateImpl(stop=self.stop)
 
-                explore_exploit = random.random()
-                if explore_exploit < self.epsilon(epoch):
-                    # explore (choose random action)
-                    chosen_action = random.choice(game_state.get_allowed_actions(c.PLAYER))
-                else:
-                    # exploit (take action with highest q-value)
-                    best_action = max(game_state.get_allowed_actions(c.PLAYER),
-                                      key=lambda act: self.q(game_state, act))
-                    chosen_action = best_action
+        while game_state.state() == 'not over':
+            # Make a move, experience reward, update weights
+            old_game_state = game_state.clone()
+            chosen_action = None
 
-                # Complete move
-                game_state.execute_action(chosen_action, c.PLAYER)
-                game_state.add_new_tile()
+            explore_exploit = random.random()
+            if explore_exploit < self.epsilon(epoch):
+                # explore (choose random action)
+                chosen_action = random.choice(game_state.get_allowed_actions(c.PLAYER))
+            else:
+                # exploit (take action with highest q-value)
+                best_action = max(game_state.get_allowed_actions(c.PLAYER),
+                                  key=lambda act: self.q(game_state, act))
+                chosen_action = best_action
 
-                # experience reward, calculate td_error
-                td_error = self._td_error(old_game_state, chosen_action, game_state)
+            # Complete move
+            game_state.execute_action(chosen_action, c.PLAYER)
+            game_state.add_new_tile()
 
-                self._update_weights(old_game_state, chosen_action, td_error)
+            # experience reward, calculate td_error
+            td_error = self._td_error(old_game_state, chosen_action, game_state)
 
-            print(game_state.state(), game_state.matrix)
-            print('epoch finished. weights:', self.weights)
+            self._update_weights(old_game_state, chosen_action, td_error)
+
+        print(game_state.state(), game_state.matrix)
+        print('epoch finished. weights:', self.weights)
+        self.cur_epoch += 1
+        return self.weights
 
     def decide(self, game_state):
         # exploit (take action with highest q-value)
