@@ -158,7 +158,7 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
 
 
 class QLearningAgent(Base2048Agent):
-    def __init__(self, epochs, alpha, epsilon, discount, stop=2048, weights=None):
+    def __init__(self, epochs, alpha, epsilon, discount, stop=2048, weights=None, feature_set='basic'):
         """
 
         :param epochs:
@@ -170,6 +170,7 @@ class QLearningAgent(Base2048Agent):
         super().__init__()
         self.epochs = epochs
         self.alpha = alpha
+
         if isinstance(epsilon, type(int)):
             self.epsilon = lambda x: epsilon
         elif epsilon == 'decayslow':
@@ -181,19 +182,30 @@ class QLearningAgent(Base2048Agent):
             self.epsilon = lambda x: np.power(exponent, -x)
         elif epsilon == 'oscillate':
             self.epsilon = lambda x: (np.cos(x * 2*np.pi / (self.epochs / 10)) + 1) / 2
+
+        self.features = []
+        if feature_set == 'basic':
+            for i in range(16):
+                def mkfeat(i): return lambda mat: np.log(mat[i] + 1)
+                self.features.append(mkfeat(i))
+        elif feature_set == 'intersection':
+            for i in range(16):
+                for j in range(16):
+                    def mkfeat(i, j): return lambda mat: np.log(mat[i] + 1) * np.log(mat[j] + 1)
+                    self.features.append(mkfeat(i, j))
         self.discount = discount
         self.stop = stop
         self.cur_epoch = 0
         if weights is None:
-            self.weights = [1 for i in range(16)]
+            self.weights = [1 for i in range(len(self.features))]
             self.start_training()
         else:
             self.weights = weights
 
     def evaluate(self, game_state):
         # component-wise multiplies weights and board values
-        arr = np.log(np.ravel(game_state.matrix) + 1)
-        return np.dot(self.weights, arr)
+        mat = np.ravel(game_state.matrix)
+        return np.dot(self.weights, [feat(mat) for feat in self.features])
 
     def _update_weights(self, game_state: BaseGameState, action, td_error):
         intermediate_state = game_state.get_successor(action, c.PLAYER)
@@ -201,7 +213,7 @@ class QLearningAgent(Base2048Agent):
         next_state_matrices = list(map(lambda st: np.ravel(st.matrix), next_states))
 
         for i, weight in enumerate(self.weights):
-            feature_value = np.average(np.array(list(map(lambda mat: np.log(mat[i] + 1), next_state_matrices))))
+            feature_value = np.average(np.array(list(map(self.features[i], next_state_matrices))))
             term = (self.alpha * td_error * feature_value)
 
             self.weights[i] = weight + term
@@ -237,7 +249,9 @@ class QLearningAgent(Base2048Agent):
         return td_error
 
     def start_training(self):
-        visualizer = WeightVisualizerGrid(self.train)
+        #visualizer = WeightVisualizerGrid(self.train)
+        while self.train() is not None:
+            pass
 
     def train(self):
         epoch = self.cur_epoch
