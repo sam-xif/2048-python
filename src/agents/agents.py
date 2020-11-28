@@ -171,8 +171,13 @@ class QLearningAgent(Base2048Agent):
         self.alpha = alpha
         if isinstance(epsilon, type(int)):
             self.epsilon = lambda x: epsilon
-        elif epsilon == 'decay':
+        elif epsilon == 'decayslow':
             self.epsilon = lambda x: np.log(self.epochs - x + 1) / np.log(self.epochs + 1)
+        elif epsilon == 'decaylinear':
+            self.epsilon = lambda x: (-1/self.epochs) * x + 1
+        elif epsilon == 'decayfast':
+            exponent = np.exp(np.log(0.01) / -self.epochs)
+            self.epsilon = lambda x: np.power(exponent, -x)
         elif epsilon == 'oscillate':
             self.epsilon = lambda x: (np.cos(x * 2*np.pi / (self.epochs / 10)) + 1) / 2
         self.discount = discount
