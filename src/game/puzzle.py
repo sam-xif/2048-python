@@ -2,6 +2,7 @@ from tkinter import Frame, Label, CENTER
 
 from src.game import constants as c
 from src.game.gamestate import GameStateImpl
+import time
 
 
 class GameGrid(Frame):
@@ -35,20 +36,20 @@ class GameGrid(Frame):
 
     def mainloop(self):
         game_ended = False
-        while True:
+        while not game_ended:
             if self.agent is not None:
                 action = self.agent.decide(self.game_state)
                 moved = self.game_state.execute_action(action, c.PLAYER)
                 if moved:
                     self.game_state.add_new_tile()
-                if self.check_win_lose():
-                    game_ended = True
-                    break
 
                 #print('Score:', self.game_state.get_score())
 
             self.update()
             self.update_grid_cells()
+
+            if self.check_win_lose():
+                game_ended = True
 
         if game_ended:
             while True:
@@ -95,16 +96,16 @@ class GameGrid(Frame):
         :return:
         """
         if self.game_state.state() == 'win':
-            self.grid_cells[1][1].configure(
-                text="You", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
-            self.grid_cells[1][2].configure(
-                text="Win!", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
+            # self.grid_cells[1][1].configure(
+            #     text="You", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
+            # self.grid_cells[1][2].configure(
+            #     text="Win!", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
             return True
         if self.game_state.state() == 'lose':
-            self.grid_cells[1][1].configure(
-                text="You", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
-            self.grid_cells[1][2].configure(
-                text="Lose!", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
+            # self.grid_cells[1][1].configure(
+            #     text="You", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
+            # self.grid_cells[1][2].configure(
+            #     text="Lose!", bg=c.BACKGROUND_COLOR_CELL_EMPTY)
             return True
 
         return False
