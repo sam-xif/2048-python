@@ -154,3 +154,117 @@ class VariableDepthExpectimax(DepthLimitedExpectimax):
 
         mx = self._max_decision(game_state, depth=depth)
         return mx
+
+
+class QLearningAgent(Base2048Agent):
+    def __init__(self, epochs, alpha, epsilon, discount, stop=2048, weights=None):
+        """
+
+        :param epochs:
+        :param alpha:
+        :param epsilon:
+        :param discount:
+        :param stop: Train on games that have a win condition when the tile with value `stop` is reached
+        """
+        super().__init__()
+        self.epochs = epochs
+        self.alpha = alpha
+        if isinstance(epsilon, type(int)):
+            self.epsilon = lambda x: epsilon
+        elif epsilon == 'decay':
+            self.epsilon = lambda x: np.log(self.epochs - x + 1) / np.log(self.epochs + 1)
+        elif epsilon == 'oscillate':
+            self.epsilon = lambda x: (np.cos(x * 2*np.pi / (self.epochs / 10)) + 1) / 2
+        self.discount = discount
+        self.stop = stop
+        if weights is None:
+            self.weights = [1 for i in range(16)]
+            self.train()
+        else:
+            self.weights = weights
+
+    def evaluate(self, game_state):
+        # component-wise multiplies weights and board values
+        arr = np.log(np.ravel(game_state.matrix) + 1)
+        return np.dot(self.weights, arr)
+
+    def _update_weights(self, game_state: BaseGameState, action, td_error):
+        intermediate_state = game_state.get_successor(action, c.PLAYER)
+        next_states = intermediate_state.get_successors(c.ADVERSARY)
+        next_state_matrices = list(map(lambda st: np.ravel(st.matrix), next_states))
+
+        for i, weight in enumerate(self.weights):
+            feature_value = np.average(np.array(list(map(lambda mat: np.log(mat[i] + 1), next_state_matrices))))
+            term = (self.alpha * td_error * feature_value)
+
+            self.weights[i] = weight + term
+
+    def q(self, game_state: BaseGameState, action):
+        # return the average difference between new_score of successors and prev_score
+        intermediate_state = game_state.get_successor(action, c.PLAYER)
+        next_states = intermediate_state.get_successors(c.ADVERSARY)
+        return np.average(np.array(list(map(lambda st: self.evaluate(st), next_states))))
+
+    def _reward(self, old_game_state: BaseGameState, new_game_state: BaseGameState):
+        if new_game_state.state() == 'win':
+            return 1000000
+        elif new_game_state.state() == 'lose':
+            return -1000000
+
+        # Calculate the square of the score delta.
+        # It is squared to encode the increasing marginal returns of merging more tiles
+        return (new_game_state.get_score() - old_game_state.get_score())**2
+
+    def _td_error(self, old_state: BaseGameState, action, new_state: BaseGameState):
+        reward = self._reward(old_state, new_state)
+        # (r + gamma max over a' Q(s', a')) - Q(s, a)
+        if len(new_state.get_allowed_actions(c.PLAYER)) == 0:
+            max_q = 0
+        else:
+            max_q = max([self.q(new_state, act) for act in new_state.get_allowed_actions(c.PLAYER)])
+
+        td_error = (reward
+                   + self.discount
+                   * max_q) \
+                   - self.q(old_state, action)
+        return td_error
+
+    def train(self):
+        for epoch in range(self.epochs):
+            print('training epoch', epoch, '; epsilon =', self.epsilon(epoch))
+            game_state = GameStateImpl(stop=self.stop)
+
+            while game_state.state() == 'not over':
+                # Make a move, experience reward, update weights
+                old_game_state = game_state.clone()
+                chosen_action = None
+
+                explore_exploit = random.random()
+                if explore_exploit < self.epsilon(epoch):
+                    # explore (choose random action)
+                    chosen_action = random.choice(game_state.get_allowed_actions(c.PLAYER))
+                else:
+                    # exploit (take action with highest q-value)
+                    best_action = max(game_state.get_allowed_actions(c.PLAYER),
+                                      key=lambda act: self.q(game_state, act))
+                    chosen_action = best_action
+
+                # Complete move
+                game_state.execute_action(chosen_action, c.PLAYER)
+                game_state.add_new_tile()
+
+                # experience reward, calculate td_error
+                td_error = self._td_error(old_game_state, chosen_action, game_state)
+
+                self._update_weights(old_game_state, chosen_action, td_error)
+
+            print(game_state.state(), game_state.matrix)
+            print('epoch finished. weights:', self.weights)
+
+    def decide(self, game_state):
+        # exploit (take action with highest q-value)
+        best_action = max(game_state.get_allowed_actions(c.PLAYER),
+                          key=lambda act: self.q(game_state, act))
+        return best_action
+
+

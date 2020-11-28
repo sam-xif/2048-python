@@ -55,12 +55,13 @@ def add_two(mat):
 # 3 marks for correct checking
 
 
-def game_state(mat):
+def game_state(mat, stop=2048):
     # Commenting this out because 1) we don't want to stop at 2048 and 2) optimization
-    # for i in range(len(mat)):
-    #     for j in range(len(mat[0])):
-    #         if mat[i][j] == 2048:
-    #             return 'win'
+    if stop is not None:
+        for i in range(len(mat)):
+            for j in range(len(mat[0])):
+                if mat[i][j] == stop:
+                    return 'win'
 
     # According to the profiler, the method in which 8.3% of time is being spent (the highest proportion) is this one.
     # Time to optimize this more!

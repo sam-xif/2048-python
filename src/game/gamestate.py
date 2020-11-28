@@ -139,10 +139,11 @@ class CloneableGameState(BaseGameState):
 
 
 class GameStateImpl(CloneableGameState):
-    def __init__(self):
+    def __init__(self, stop=None):
         super().__init__()
         self.init_matrix()
         self.score = 0
+        self.stop = stop
 
         self.commands = {c.ACTION_UP: logic.up,
                          c.ACTION_DOWN: logic.down,
@@ -166,7 +167,7 @@ class GameStateImpl(CloneableGameState):
         self.matrix = logic.add_two(self.matrix)
 
     def state(self):
-        return logic.game_state(self.matrix)
+        return logic.game_state(self.matrix, stop=self.stop)
 
     def execute_action(self, action, agent_id):
         # key = repr(event.char)
