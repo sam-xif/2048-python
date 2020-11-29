@@ -171,7 +171,7 @@ class QLearningAgent(Base2048Agent):
         self.epochs = epochs
         self.alpha = alpha
 
-        if isinstance(epsilon, type(int)):
+        if type(epsilon) is float:
             self.epsilon = lambda x: epsilon
         elif epsilon == 'decayslow':
             self.epsilon = lambda x: np.log(self.epochs - x + 1) / np.log(self.epochs + 1)
