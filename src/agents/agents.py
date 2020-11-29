@@ -185,14 +185,26 @@ class QLearningAgent(Base2048Agent):
 
         self.features = []
         if feature_set == 'basic':
+            def mkfeat(i):
+                return lambda mat: np.log(mat[i] + 1)
             for i in range(16):
-                def mkfeat(i): return lambda mat: np.log(mat[i] + 1)
                 self.features.append(mkfeat(i))
         elif feature_set == 'intersection':
+            def mkfeat(i, j):
+                return lambda mat: np.log(mat[i] + 1) * np.log(mat[j] + 1)
             for i in range(16):
-                for j in range(16):
-                    def mkfeat(i, j): return lambda mat: np.log(mat[i] + 1) * np.log(mat[j] + 1)
+                for j in range(i, 16):
                     self.features.append(mkfeat(i, j))
+        elif feature_set == 'basic_plus_rows':
+            def mkfeat(i):
+                return lambda mat: np.log(mat[i] + 1)
+            def mkrowfeat(i):
+                return lambda mat: np.sum(np.log(mat[4*i:4*(i+1)] + 1))
+            for i in range(16):
+                self.features.append(mkfeat(i))
+            for i in range(4):
+                self.features.append(mkrowfeat(i))
+
         self.discount = discount
         self.stop = stop
         self.cur_epoch = 0
@@ -232,7 +244,7 @@ class QLearningAgent(Base2048Agent):
 
         # Calculate the square of the score delta.
         # It is squared to encode the increasing marginal returns of merging more tiles
-        return (new_game_state.get_score() - old_game_state.get_score())**2
+        return new_game_state.get_score() - old_game_state.get_score()
 
     def _td_error(self, old_state: BaseGameState, action, new_state: BaseGameState):
         reward = self._reward(old_state, new_state)
@@ -249,9 +261,9 @@ class QLearningAgent(Base2048Agent):
         return td_error
 
     def start_training(self):
-        #visualizer = WeightVisualizerGrid(self.train)
-        while self.train() is not None:
-            pass
+        visualizer = WeightVisualizerGrid(self.train)
+        #while self.train() is not None:
+        #   pass
 
     def train(self):
         epoch = self.cur_epoch
