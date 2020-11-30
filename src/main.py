@@ -1,13 +1,13 @@
 from src.game.puzzle import GameGrid
-from src.agents.agents import RandomAgent, DepthLimitedExpectimax, VariableDepthExpectimax, QLearningAgent
+from src.agents.agents import RandomAgent, DepthLimitedExpectimax, VariableDepthExpectimax, QLearningAgent, IDEQLearningAgent
 
 from src.agent_tester import run_test
 
 UI = False
 
 if __name__ == '__main__':
-    gamegrid = GameGrid(agent=QLearningAgent(
-        2000, 0.00001, 0.8, 0.95, stop=2048,
+    gamegrid = GameGrid(agent=IDEQLearningAgent(
+        2000, 0.00001, 0.4, 0.98, stop=2048,
         feature_set='basic_plus_rows'
         # weights=[-6697.210478914676, -8096.405527146442, -7870.483575571659, -4360.95375572444,
         #          -11071.292221002843, -7443.233588948385, -5227.816925377352, -3721.621357580199,
