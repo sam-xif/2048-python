@@ -2,7 +2,8 @@ from tkinter import Frame, Label, CENTER
 
 from src.game import constants as c
 from src.game.gamestate import GameStateImpl
-import time
+
+import pickle
 
 
 class GameGrid(Frame):
@@ -52,6 +53,8 @@ class GameGrid(Frame):
                 game_ended = True
 
         if game_ended:
+            with open('actions_seed42.pkl', 'wb+') as f:
+                pickle.dump(self.game_state.action_history, f)
             while True:
                 self.update()
                 self.update_idletasks()

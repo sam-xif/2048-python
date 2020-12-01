@@ -144,6 +144,7 @@ class GameStateImpl(CloneableGameState):
         self.init_matrix()
         self.score = 0
         self.stop = stop
+        self.action_history = []
 
         self.commands = {c.ACTION_UP: logic.up,
                          c.ACTION_DOWN: logic.down,
@@ -157,6 +158,7 @@ class GameStateImpl(CloneableGameState):
         gs = GameStateImpl()
         gs.matrix = [x[:] for x in self.matrix]
         gs.history_matrixs = self.history_matrixs[:]
+        gs.action_history = self.action_history[:]
         gs.score = self.score
         return gs
 
@@ -185,6 +187,7 @@ class GameStateImpl(CloneableGameState):
                     # self.matrix = logic.add_two(self.matrix)
                     # record last move
                     self.history_matrixs.append(self.matrix)
+                    self.action_history.append(action)
                     self.score += scored
                 return done
         elif agent_id == c.ADVERSARY:
