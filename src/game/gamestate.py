@@ -139,7 +139,7 @@ class CloneableGameState(BaseGameState):
 
 
 class GameStateImpl(CloneableGameState):
-    def __init__(self, stop=None):
+    def __init__(self, stop=2048):
         super().__init__()
         self.init_matrix()
         self.score = 0

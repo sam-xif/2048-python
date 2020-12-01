@@ -2,6 +2,7 @@
 Defines an abstract base agent class for playing 2048.
 """
 import random
+import time
 import src.game.constants as c
 
 from src.game.gamestate import BaseGameState, GameStateImpl
@@ -105,7 +106,7 @@ class DepthLimitedExpectimax(Base2048Agent):
         successor_states = [game_state.get_successor(act, c.PLAYER) for act in actions]
         arr = [self._expectation_value(st, depth) for st in successor_states]
         max_ = np.max(arr)
-        print('MEUs of actions:', arr, actions)
+        #print('MEUs of actions:', arr, actions)
         indices = [i for i, x in enumerate(arr) if abs(x - max_) <= 0.001]
         return actions[random.choice(indices)]  # Randomly break ties
 
@@ -264,6 +265,7 @@ class QLearningAgent(Base2048Agent):
         return td_error
 
     def train(self):
+        self.start_time = time.time()
         visualizer = WeightVisualizerGrid(self._run_epoch)
         #while self.train() is not None:
         #   pass
@@ -302,6 +304,7 @@ class QLearningAgent(Base2048Agent):
 
         print(game_state.state(), game_state.matrix)
         print('epoch finished. weights:', self.weights)
+        print('epochs/sec:', (self.cur_epoch + 1) / (time.time() - self.start_time))
         self.cur_epoch += 1
         return self.weights
 
