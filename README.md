@@ -1,19 +1,13 @@
-2048-python
-===========
+# 2048 AI
+Kumar Anupam, Sam Xifaras
 
-[![Run on Repl.it](https://repl.it/badge/github/yangshun/2048-python)](https://repl.it/github/yangshun/2048-python)
+Using Yangshun Tay and Emmanuel Goh's 2048 implementation as a base, we implemented
+a number of AI agents with different algorithms to play the game.
 
-Based on the popular game [2048](https://github.com/gabrielecirulli/2048) by Gabriele Cirulli. The game's objective is to slide numbered tiles on a grid to combine them to create a tile with the number 2048. Here is a Python version that uses TKinter! 
+## How to Run
+Run `./run.py` to run the agent and watch it play a game.
+By default, the program uses variable-depth expectimax, which was our top-performing
+algorithm. Take a look inside `src/main.py` to tweak which agent the program uses.
 
-![screenshot](img/screenshot.png)
-
-To start the game, run:
-    
-    $ python3 puzzle.py
-
-
-Contributors:
-==
-
-- [Yanghun Tay](http://github.com/yangshun)
-- [Emmanuel Goh](http://github.com/emman27)
+## Contributing
+Feel free to fork and explore the algorithms we used, make changes, and submit pull requests!
